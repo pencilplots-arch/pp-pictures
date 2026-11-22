@@ -14,13 +14,20 @@ def skin(p):
             r, g, b = a[x, y]; tot += 1; hit += (r > 150 and r > g + 18 and g > b + 8 and r - b > 40)
     return hit / tot
 
+SCALE = float(os.environ.get('PP_SCALE', '1'))
+def small_ref(p):
+    q = p.replace('.png', '_s.png')
+    if not os.path.exists(q):
+        im = Image.open(p).convert('RGB'); k = 384 / max(im.size); im.resize((max(16, int(im.width * k) // 16 * 16), max(16, int(im.height * k) // 16 * 16)), Image.LANCZOS).save(q)
+    return q
 def run(j, seed, out):
     cmd = [os.path.abspath('bin/sd-cli'), '--diffusion-model', f'{M}/flux-2-klein-4b-{Q}.gguf', '--vae', f'{M}/flux2-vae.safetensors',
            '--llm', f'{M}/Qwen3-4B-Q4_K_M.gguf', '-p', j['prompt'], '--cfg-scale', '1.0', '--sampling-method', 'euler', '--steps', '4',
-           '-W', str(j['w']), '-H', str(j['h']), '--seed', str(seed), '-t', str(os.cpu_count()), '-o', out]
-    if j.get('ref'): cmd[1:1] = ['-r', os.path.join(B, j['ref'])]
+           '-W', str(int(j['w'] * SCALE) // 16 * 16), '-H', str(int(j['h'] * SCALE) // 16 * 16), '--seed', str(seed), '-t', str(os.cpu_count()), '-o', out]
+    if j.get('ref'): cmd[1:1] = ['-r', small_ref(os.path.join(B, j['ref'])) if SCALE < 1 else os.path.join(B, j['ref'])]
     t = time.time(); r = subprocess.run(cmd, capture_output=True, text=True)
     print(j['id'], seed, r.returncode, round(time.time() - t), 's', (r.stderr[-300:] if r.returncode else ''), flush=True)
+    if r.returncode == 0 and SCALE < 1 and os.path.exists(out): Image.open(out).resize((j['w'], j['h']), Image.LANCZOS).save(out)
     return r.returncode == 0 and os.path.exists(out)
 
 for j in jobs:

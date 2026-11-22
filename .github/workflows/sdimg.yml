@@ -10,6 +10,7 @@ on:
       stage:  {description: 'refs, free, named or shots', required: true}
       n:      {description: 'number of parallel machines', required: true}
       quant:  {description: 'diffusion gguf quant', required: false, default: 'Q8_0'}
+      scale:  {description: 'draw size factor (then upscaled)', required: false, default: '1'}
 permissions:
   contents: read
 env:
@@ -60,7 +61,7 @@ jobs:
       - name: generate
         run: |
           pip install -q pillow; chmod +x bin/sd-cli; mkdir -p out
-          python3 b/run_sd.py b/jobs.json ${{ inputs.stage }} ${{ matrix.i }} ${{ inputs.n }} models ${{ inputs.quant }} out
+          PP_SCALE=${{ inputs.scale }} python3 b/run_sd.py b/jobs.json ${{ inputs.stage }} ${{ matrix.i }} ${{ inputs.n }} models ${{ inputs.quant }} out
           ls out | wc -l
       - uses: actions/upload-artifact@v4
         if: always()
