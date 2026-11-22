@@ -4,7 +4,7 @@ refs: each ref is redrawn with the next seed (up to 4) while its face area is sk
 import json, os, subprocess, sys, time
 from PIL import Image
 J, stage, part, n, M, Q, O = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5], sys.argv[6], sys.argv[7]
-B = os.path.dirname(os.path.abspath(J)); allj = json.load(open(J)); jobs = (allj['refs'] if stage == 'refs' else [j for j in allj['shots'] if stage == 'shots' or (stage == 'free' and (j['ref'] in (None, 'c_extra.png'))) or (stage == 'named' and j['ref'] not in (None, 'c_extra.png'))])[part::n]
+B = os.path.dirname(os.path.abspath(J)); allj = json.load(open(J)); jobs = ([j for j in allj['refs'] + allj['shots'] if j['id'] in stage.split(':')[1].split(',')] if stage.startswith('only:') else allj['refs'] if stage == 'refs' else [j for j in allj['shots'] if stage == 'shots' or (stage == 'free' and (j['ref'] in (None, 'c_extra.png'))) or (stage == 'named' and j['ref'] not in (None, 'c_extra.png'))])[part::n]
 os.makedirs(O, exist_ok=True)
 
 def skin(p):
